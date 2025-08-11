@@ -6,11 +6,9 @@ function createWindow() {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: true,       // enable Node.js in webview
+      contextIsolation: false,     // disable context isolation
       webviewTag: true,
-      // Note: JS enabled by default, disabling requires window recreate
-      javascript: true,
     }
   });
 

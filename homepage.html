@@ -60,7 +60,7 @@
     /* Webview fills remaining space */
     #webview {
       width: 100%;
-      height: calc(100vh - 50px); /* Adjust header height if needed */
+      height: calc(100vh - 50px); /* header height */
       border: none;
     }
   </style>
@@ -74,22 +74,63 @@
     <button id="settingsBtn">Settings ⚙️</button>
   </header>
 
-  <webview id="webview" src="https://www.google.com" ></webview>
+  <webview id="webview" src="startpage.html" style="width:100%; height: calc(100vh - 50px);"></webview>
+
 
   <script>
+    const path = require('path');
+
     const searchEngines = {
       google: 'https://www.google.com/search?q=',
       duckduckgo: 'https://duckduckgo.com/?q=',
       bing: 'https://www.bing.com/search?q='
     };
 
+    const blockedDomains = [
+      'doubleclick.net',
+      'google-analytics.com',
+      'googlesyndication.com',
+      'adservice.google.com',
+      'ads.yahoo.com',
+      'facebook.net',
+      'tracker.example.com'
+    ];
+
     const webview = document.getElementById('webview');
     const searchInput = document.getElementById('searchInput');
+
+    // Absolute file path to startpage.html
+    const startpagePath = `file://${path.join(__dirname, 'startpage.html')}`;
+
+    function setupAntiTracking(enabled) {
+      if (!webview || typeof webview.getWebContents !== 'function') return;
+
+      const wc = webview.getWebContents();
+      if (!wc) return;
+
+      // Remove any previous listener
+      try {
+        wc.session.webRequest.onBeforeRequest(null);
+      } catch {}
+
+      if (enabled) {
+        wc.session.webRequest.onBeforeRequest((details, callback) => {
+          const url = details.url;
+          for (const domain of blockedDomains) {
+            if (url.includes(domain)) {
+              console.log(`Blocked tracking URL: ${url}`);
+              return callback({ cancel: true });
+            }
+          }
+          callback({ cancel: false });
+        });
+      }
+    }
 
     window.onload = () => {
       const settings = JSON.parse(localStorage.getItem('browserSettings')) || {};
 
-      // Apply dark mode
+      // Dark mode toggle
       if (settings.darkMode) {
         document.body.classList.add('dark-mode');
         document.querySelector('header').classList.add('dark-mode');
@@ -98,22 +139,25 @@
         document.querySelector('header').classList.remove('dark-mode');
       }
 
-      // Font size and zoom
+      // Font size & zoom
       document.body.style.fontSize = (settings.fontSize || 100) + '%';
       document.body.style.zoom = (settings.zoomLevel || 100) + '%';
 
-      // Set search engine globally
+      // Set selected search engine
       window.selectedSearchEngine = settings.searchEngine || 'google';
 
-      // Load homepage URL or default
+      // Load homepage or startpage
       if (settings.homepageUrl && settings.homepageUrl.trim() !== '') {
         webview.loadURL(settings.homepageUrl);
       } else {
-        webview.loadURL('https://www.google.com');
+        webview.loadURL(startpagePath);
       }
+
+      // Setup anti-tracking
+      setupAntiTracking(settings.antiTracking);
     };
 
-    // Handle search bar Enter key to load URL in webview
+    // Search input enter to load URL/search
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const query = e.target.value.trim();
@@ -129,12 +173,12 @@
       }
     });
 
-    // Open settings popup
+    // Settings button opens popup
     document.getElementById('settingsBtn').addEventListener('click', () => {
       window.open('settings.html', 'settingsWindow', 'width=600,height=600');
     });
 
-    // Clock update
+    // Clock updater
     function updateClock() {
       const clock = document.getElementById('clock');
       const now = new Date();
