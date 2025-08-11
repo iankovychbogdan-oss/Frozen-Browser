@@ -1,0 +1,5 @@
+node_modules/
+dist/
+FrozenBrowser-win32-x64/
+*.exe
+*.asar

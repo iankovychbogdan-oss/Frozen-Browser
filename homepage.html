@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Frozen Browser - Home</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; height: 100%;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: rgba(34, 34, 34, 0.7);
+      color: white;
+      padding: 10px 20px;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+    #searchBar {
+      flex-grow: 1;
+      margin: 0 20px;
+    }
+    #searchBar input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: none;
+      font-size: 16px;
+    }
+    #clock {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      min-width: 90px;
+      text-align: right;
+    }
+    #settingsBtn {
+      background-color: #444;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    #settingsBtn:hover {
+      background-color: #555;
+    }
+    /* Dark mode */
+    body.dark-mode {
+      background-color: #121212;
+      color: #eee;
+    }
+    header.dark-mode {
+      background-color: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(10px);
+    }
+    /* Webview fills remaining space */
+    #webview {
+      width: 100%;
+      height: calc(100vh - 50px); /* header height */
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div id="clock">--:--:--</div>
+    <div id="searchBar">
+      <input type="text" id="searchInput" placeholder="Search or enter URL" />
+    </div>
+    <button id="settingsBtn">Settings ⚙️</button>
+  </header>
+
+  <webview id="webview" src="startpage.html" style="width:100%; height: calc(100vh - 50px);"></webview>
+
+
+  <script>
+    const path = require('path');
+
+    const searchEngines = {
+      google: 'https://www.google.com/search?q=',
+      duckduckgo: 'https://duckduckgo.com/?q=',
+      bing: 'https://www.bing.com/search?q='
+    };
+
+    const blockedDomains = [
+      'doubleclick.net',
+      'google-analytics.com',
+      'googlesyndication.com',
+      'adservice.google.com',
+      'ads.yahoo.com',
+      'facebook.net',
+      'tracker.example.com'
+    ];
+
+    const webview = document.getElementById('webview');
+    const searchInput = document.getElementById('searchInput');
+
+    // Absolute file path to startpage.html
+    const startpagePath = `file://${path.join(__dirname, 'startpage.html')}`;
+
+    function setupAntiTracking(enabled) {
+      if (!webview || typeof webview.getWebContents !== 'function') return;
+
+      const wc = webview.getWebContents();
+      if (!wc) return;
+
+      // Remove any previous listener
+      try {
+        wc.session.webRequest.onBeforeRequest(null);
+      } catch {}
+
+      if (enabled) {
+        wc.session.webRequest.onBeforeRequest((details, callback) => {
+          const url = details.url;
+          for (const domain of blockedDomains) {
+            if (url.includes(domain)) {
+              console.log(`Blocked tracking URL: ${url}`);
+              return callback({ cancel: true });
+            }
+          }
+          callback({ cancel: false });
+        });
+      }
+    }
+
+    window.onload = () => {
+      const settings = JSON.parse(localStorage.getItem('browserSettings')) || {};
+
+      // Dark mode toggle
+      if (settings.darkMode) {
+        document.body.classList.add('dark-mode');
+        document.querySelector('header').classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+        document.querySelector('header').classList.remove('dark-mode');
+      }
+
+      // Font size & zoom
+      document.body.style.fontSize = (settings.fontSize || 100) + '%';
+      document.body.style.zoom = (settings.zoomLevel || 100) + '%';
+
+      // Set selected search engine
+      window.selectedSearchEngine = settings.searchEngine || 'google';
+
+      // Load homepage or startpage
+      if (settings.homepageUrl && settings.homepageUrl.trim() !== '') {
+        webview.loadURL(settings.homepageUrl);
+      } else {
+        webview.loadURL(startpagePath);
+      }
+
+      // Setup anti-tracking
+      setupAntiTracking(settings.antiTracking);
+    };
+
+    // Search input enter to load URL/search
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const query = e.target.value.trim();
+        if (!query) return;
+
+        let url;
+        if (query.startsWith('http://') || query.startsWith('https://')) {
+          url = query;
+        } else {
+          url = searchEngines[window.selectedSearchEngine] + encodeURIComponent(query);
+        }
+        webview.loadURL(url);
+      }
+    });
+
+    // Settings button opens popup
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+      window.open('settings.html', 'settingsWindow', 'width=600,height=600');
+    });
+
+    // Clock updater
+    function updateClock() {
+      const clock = document.getElementById('clock');
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      const s = now.getSeconds().toString().padStart(2, '0');
+      clock.textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>
