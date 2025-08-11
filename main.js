@@ -2,16 +2,17 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
 function createWindow() {
-    const win = new BrowserWindow({
+    const mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            contextIsolation: false,
+            webviewTag: true,  // <-- enable webview
         }
     });
 
-    // Load your custom start page
-    win.loadFile(path.join(__dirname, 'startpage', 'index.html'));
+    mainWindow.loadFile(path.join(__dirname, 'homepage.html'));
 }
 
 app.whenReady().then(createWindow);
