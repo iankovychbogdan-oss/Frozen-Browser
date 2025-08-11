@@ -9,7 +9,7 @@ function createWindow() {
         }
     });
 
-    win.loadURL('https://google.com');
+    win.loadURL('https://duckduckgo.com');
 }
 
 app.whenReady().then(createWindow);
