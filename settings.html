@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Frozen Browser Settings</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+    label { display: block; margin: 10px 0 5px; }
+    input[type="text"], select, input[type="number"] { width: 100%; padding: 6px; }
+    .toggle {
+      display: flex; align-items: center; margin: 10px 0;
+    }
+    .toggle input { margin-right: 10px; }
+    button { margin-top: 20px; padding: 10px 20px; }
+  </style>
+</head>
+<body>
+  <h2>Browser Settings</h2>
+
+  <label for="homepageUrl">Homepage URL:</label>
+  <input type="text" id="homepageUrl" placeholder="https://example.com" />
+
+  <div class="toggle">
+    <input type="checkbox" id="darkMode" />
+    <label for="darkMode">Enable Dark Mode</label>
+  </div>
+
+  <div class="toggle">
+    <input type="checkbox" id="javascript" checked />
+    <label for="javascript">Enable JavaScript</label>
+  </div>
+
+  <label for="searchEngine">Default Search Engine:</label>
+  <select id="searchEngine">
+    <option value="google">Google</option>
+    <option value="duckduckgo">DuckDuckGo</option>
+    <option value="bing">Bing</option>
+  </select>
+
+  <div class="toggle">
+    <input type="checkbox" id="clearData" />
+    <label for="clearData">Clear Browsing Data (History, Cache)</label>
+  </div>
+
+  <div class="toggle">
+    <input type="checkbox" id="cookies" checked />
+    <label for="cookies">Enable Cookies</label>
+  </div>
+
+  <label for="fontSize">Font Size (%):</label>
+  <input type="number" id="fontSize" min="50" max="200" value="100" />
+
+  <label for="zoomLevel">Zoom Level (%):</label>
+  <input type="number" id="zoomLevel" min="50" max="300" value="100" />
+
+  <div class="toggle">
+    <input type="checkbox" id="antiTracking" />
+    <label for="antiTracking">Enable Anti-Tracking</label>
+  </div>
+
+  <button id="saveSettings">Save Settings</button>
+  <button id="closeSettings">Close Settings</button>
+
+  <script>
+    // Load saved settings on load
+    window.onload = () => {
+      const settings = JSON.parse(localStorage.getItem('browserSettings')) || {};
+
+      document.getElementById('homepageUrl').value = settings.homepageUrl || '';
+      document.getElementById('darkMode').checked = settings.darkMode || false;
+      document.getElementById('javascript').checked = settings.javascript !== false;
+      document.getElementById('searchEngine').value = settings.searchEngine || 'google';
+      document.getElementById('cookies').checked = settings.cookies !== false;
+      document.getElementById('fontSize').value = settings.fontSize || 100;
+      document.getElementById('zoomLevel').value = settings.zoomLevel || 100;
+      document.getElementById('antiTracking').checked = settings.antiTracking || false;
+    };
+
+    // Save button
+    document.getElementById('saveSettings').addEventListener('click', () => {
+      const settings = {
+        homepageUrl: document.getElementById('homepageUrl').value,
+        darkMode: document.getElementById('darkMode').checked,
+        javascript: document.getElementById('javascript').checked,
+        searchEngine: document.getElementById('searchEngine').value,
+        cookies: document.getElementById('cookies').checked,
+        fontSize: parseInt(document.getElementById('fontSize').value),
+        zoomLevel: parseInt(document.getElementById('zoomLevel').value),
+        antiTracking: document.getElementById('antiTracking').checked,
+      };
+      localStorage.setItem('browserSettings', JSON.stringify(settings));
+      alert('Settings saved!');
+    });
+
+    // Close button
+    document.getElementById('closeSettings').addEventListener('click', () => {
+      window.close();
+    });
+  </script>
+</body>
+</html>

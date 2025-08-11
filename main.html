@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Frozen Browser Main</title>
+</head>
+<body>
+  <h1>Frozen Browser</h1>
+  <button id="settingsBtn">Settings ⚙️</button>
+
+  <script>
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+      // Open settings.html in a new popup window 600x600 px
+      window.open('settings.html', 'settingsWindow', 'width=600,height=600');
+    });
+  </script>
+</body>
+</html>
