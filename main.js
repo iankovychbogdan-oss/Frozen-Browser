@@ -1,4 +1,5 @@
 const { app, BrowserWindow } = require('electron');
+const path = require('path');
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -9,7 +10,8 @@ function createWindow() {
         }
     });
 
-    win.loadURL('https://duckduckgo.com');
+    // Load your custom start page
+    win.loadFile(path.join(__dirname, 'startpage', 'index.html'));
 }
 
 app.whenReady().then(createWindow);
