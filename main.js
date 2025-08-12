@@ -1,55 +1,64 @@
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
-const fs = require('fs');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: true,      // Enable Node.js in renderer for your code
+      contextIsolation: false,    // Disable context isolation to match nodeIntegration
       webviewTag: true,
     },
   });
 
   mainWindow.loadFile(path.join(__dirname, 'homepage.html'));
 
-  // Listen for download events
-  mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
-    // Optionally, ask user where to save
-    const fileName = item.getFilename();
-    const defaultPath = path.join(app.getPath('downloads'), fileName);
+  mainWindow.webContents.session.on('will-download', (event, item) => {
+    console.log('Download started:', item.getFilename());
 
-    // You can prompt user for a save location (optional)
-    dialog.showSaveDialog({
-      defaultPath,
+    // Prevent default to control download path
+    event.preventDefault();
+
+    // Default save path
+    const defaultPath = path.join(app.getPath('downloads'), item.getFilename());
+
+    dialog.showSaveDialog(mainWindow, {
       title: 'Save file',
+      defaultPath,
       buttonLabel: 'Save',
     }).then(({ canceled, filePath }) => {
-      if (canceled) {
+      if (canceled || !filePath) {
+        console.log('Download cancelled by user');
         item.cancel();
-      } else {
-        item.setSavePath(filePath);
+        return;
       }
+
+      item.setSavePath(filePath);
+      item.resume();
+
+      console.log('Downloading to:', filePath);
+    }).catch(err => {
+      console.error('Save dialog error:', err);
+      item.cancel();
     });
 
     item.on('updated', (event, state) => {
-      if (state === 'progressing') {
-        if (item.isPaused()) {
-          console.log('Download is paused');
-        } else {
-          console.log(`Received bytes: ${item.getReceivedBytes()}`);
-        }
+      if (state === 'progressing' && !item.isPaused()) {
+        const received = item.getReceivedBytes();
+        const total = item.getTotalBytes();
+        const percent = ((received / total) * 100).toFixed(2);
+        console.log(`Progress: ${percent}%`);
+      } else if (item.isPaused()) {
+        console.log('Download paused');
       }
     });
 
     item.once('done', (event, state) => {
       if (state === 'completed') {
-        console.log('Download successfully');
-        // Optionally notify user here
+        console.log('Download completed:', item.getSavePath());
       } else {
-        console.log(`Download failed: ${state}`);
+        console.log('Download failed:', state);
       }
     });
   });
